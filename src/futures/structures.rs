@@ -38,7 +38,8 @@ pub struct FuturesBalance {
 pub struct FuturesResponse {
     pub success: bool,
     pub code: i64,
-    pub data: Value
+    pub data: Option<Value>,
+    pub message: Option<String>
 }
 
 #[derive(Deserialize, Debug)]
@@ -294,4 +295,12 @@ pub struct ContractInfo {
 
     #[serde(rename = "volUnit", deserialize_with = "parse_string_to_f64")]
     pub vol_unit: f64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct OrderReceipt {
+    #[serde(rename = "orderId")]
+    pub order_id: String,
+    #[serde(rename = "ts")]
+    pub timestamp: u128
 }
