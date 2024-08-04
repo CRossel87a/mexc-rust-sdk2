@@ -1,5 +1,6 @@
 pub mod structures;
 
+use anyhow::Context;
 use hmac::{Hmac, Mac};
 use reqwest::Response;
 use sha2::Sha256;
@@ -165,7 +166,17 @@ impl MexcFutures {
         
 
         Ok(positions)
+    }
 
+
+    pub async fn get_fair_price(&self, symbol: &str) -> anyhow::Result<f64> {
+        let url = format!("{}/api/v1/contract/index_price/{}", FUTURES_API_URL, symbol);
+        let resp: FuturesResponse = self.client.get(url).send().await?.json().await?;
+
+        if !resp.success {
+            bail!("mexc futures err resp: {:?}", resp.data);
+        }
+        resp.data.get("indexPrice").context("Expected index price")?.as_f64().context("f64 convert error")
     }
 }
 
@@ -221,5 +232,13 @@ mod tests {
 
         let acc = client.get_open_positions().await.unwrap();
         dbg!(acc);
+    }
+
+    #[tokio::test]
+    pub async fn test_futures_get_fair_price() {
+
+        let client = MexcFutures::new(None,None,None, None).unwrap();
+        let p = client.get_fair_price("BTC_USDT").await.unwrap();
+        dbg!(p);
     }
 }
