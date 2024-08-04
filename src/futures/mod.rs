@@ -178,6 +178,21 @@ impl MexcFutures {
         }
         resp.data.get("indexPrice").context("Expected index price")?.as_f64().context("f64 convert error")
     }
+
+    pub async fn get_contract_details(&self, symbol: &str) -> anyhow::Result<ContractInfo> {
+
+        let url = format!("{}/api/v1/contract/detail?symbol={}", FUTURES_API_URL,symbol);
+
+        let resp: FuturesResponse = self.client.get(url).send().await?.json().await?;
+
+        if !resp.success {
+            bail!("mexc futures err resp: {:?}", resp.data);
+        }
+        
+        let detail: ContractInfo = serde_json::from_value(resp.data)?;
+
+        Ok(detail)
+    }
 }
 
 
@@ -239,6 +254,14 @@ mod tests {
 
         let client = MexcFutures::new(None,None,None, None).unwrap();
         let p = client.get_fair_price("BTC_USDT").await.unwrap();
+        dbg!(p);
+    }
+
+    #[tokio::test]
+    pub async fn test_futures_get_contract_details() {
+
+        let client = MexcFutures::new(None,None,None, None).unwrap();
+        let p = client.get_contract_details("BTC_USDT").await.unwrap();
         dbg!(p);
     }
 }
